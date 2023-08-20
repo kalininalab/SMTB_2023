@@ -1,4 +1,5 @@
 import os
+import sys
 
 import wandb
 import torch
@@ -18,6 +19,7 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 HIDDEN_DIM = 512
 BATCH_SIZE = 1024
 MAX_EPOCH = 10000
+DROPOUT = 0.2
 
 
 def train(model_name: str, layer_num: int):
@@ -27,12 +29,14 @@ def train(model_name: str, layer_num: int):
     # define the logger
     logger = WandbLogger(
         log_model=True,
-        project="SMTB2023",
-        name=f"{model_name.split('_')[1]}_{layer_num:02d}",
+        project="stability",
+        entity="smtb2023",
+        name=f"{model_name.split('_')[1]}_{layer_num:02d}_dropout",
         config={
             "model_name": model_name,
             "layer_num": layer_num,
             "hidden_dim": HIDDEN_DIM,
+            "dropout":DROPOUT,
         },
     )
 
@@ -52,12 +56,12 @@ def train(model_name: str, layer_num: int):
     )
 
     # initialize the model
-    model = Model(hidden_dim=HIDDEN_DIM)
+    model = Model(hidden_dim=HIDDEN_DIM, dropout=DROPOUT)
 
     # look into the directory below
     datasets = []
     for ds in ["train", "validation", "test"]:
-        p = Path(f"/shared/fluorescence/{model_name}/{ds}")
+        p = Path(f"/shared/stability/{model_name}/{ds}")
         datasets.append(train_validation_test(p, layer_num))
 
     train_dataset = FluorescenceDataset(datasets[0][0], datasets[0][1])
@@ -71,23 +75,21 @@ def train(model_name: str, layer_num: int):
     trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=validation_dataloader)
 
     # fit and test the (best) model
-    trainer.test(ckpt_path="best", test_dataloaders=test_dataloader)
+    trainer.test(ckpt_path="best", dataloaders=test_dataloader)
 
 
 model_names = {
-    48: "esm2_t48_15B_UR50D",
-    36: "esm2_t36_3B_UR50D",
+    # 48: "esm2_t48_15B_UR50D",
+    # 36: "esm2_t36_3B_UR50D",
     33: "esm2_t33_650M_UR50D",
     30: "esm2_t30_150M_UR50D",
     12: "esm2_t12_35M_UR50D",
-    6: "esm2_t6_8M_U50D",
+    6: "esm2_t6_8M_UR50D",
 }
 
-for num_layers, model_name in model_names.items():
-    # Check if the embeddings of the respecitve model exist and skip that model if they don't exist
-    if not os.path.exists(f"/shared/fluorescence/{model_name}"):
-        continue
-    for layer in range(num_layers):
-        # wandb.init()
-        train(model_name, layer)
-        wandb.finish()
+# num_layers = int(sys.argv[1])
+# model_name = model_names[num_layers]
+# for layer in range(num_layers + 1):
+    # wandb.init()
+train("esm2_t33_650M_UR50D", 33)
+wandb.finish()

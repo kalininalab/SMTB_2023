@@ -2,3 +2,5 @@
 !.gitignore
 __*__
 *.pyc
+stability/
+wandb/

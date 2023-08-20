@@ -15,12 +15,12 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 class Model(pl.LightningModule):
-    def __init__(self, hidden_dim: int):
+    def __init__(self, hidden_dim: int, dropout:float=0.5):
         super().__init__()
         self.model = nn.Sequential(
             nn.LazyLinear(hidden_dim),
             nn.ReLU(),
-            nn.Dropout(p=0.5),
+            nn.Dropout(p=dropout),
             # activation function
             nn.LazyLinear(1),
         )
