@@ -1,22 +1,16 @@
-from datasets import load_dataset
-import torch
 import torch.nn.functional as F
-import esm
-from torch.utils.data import Dataset
 import pytorch_lightning as pl
 import torch.nn as nn
 import torch.optim as optim
-from tqdm import tqdm
-import pandas as pd
-from typing import List, Tuple
-from pathlib import Path
 import torchmetrics as M
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 class Model(pl.LightningModule):
-    def __init__(self, hidden_dim: int, dropout:float=0.5):
+    def __init__(self, hidden_dim: int, dropout: float = 0.5, lr: float = 0.001, reduce_lr_patience: int = 50):
         super().__init__()
+        self.lr = lr
+        self.reduce_lr_parience = reduce_lr_patience
         self.model = nn.Sequential(
             nn.LazyLinear(hidden_dim),
             nn.ReLU(),
@@ -54,13 +48,18 @@ class Model(pl.LightningModule):
         return self.shared_step(batch, batch_idx, "test")
 
     def configure_optimizers(self):
-        optimisers = [optim.Adam(self.parameters(), lr=0.001)]
+        optimisers = [optim.Adam(self.parameters(), lr=self.lr)]
         schedulers = [
             {
-                'scheduler': ReduceLROnPlateau(optimisers[0], factor=0.1, patience=50, min_lr=1e-7),
-                'monitor': 'val/loss',
-                'interval': 'epoch',
-                'frequency': 1,
+                "scheduler": ReduceLROnPlateau(
+                    optimisers[0],
+                    factor=0.1,
+                    patience=self.reduce_lr_parience,
+                    min_lr=1e-7,
+                ),
+                "monitor": "val/loss",
+                "interval": "epoch",
+                "frequency": 1,
             }
         ]
         return optimisers, schedulers

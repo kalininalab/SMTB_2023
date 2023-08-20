@@ -20,6 +20,10 @@ HIDDEN_DIM = 512
 BATCH_SIZE = 1024
 MAX_EPOCH = 10000
 DROPOUT = 0.2
+DATASET = "/shared/stability"
+EARLY_STOPPING_PATIENCE = 100
+LR = 0.001
+REDUCE_LR_PATIENCE = 50
 
 
 def train(model_name: str, layer_num: int):
@@ -29,20 +33,23 @@ def train(model_name: str, layer_num: int):
     # define the logger
     logger = WandbLogger(
         log_model=True,
-        project="stability",
+        project=DATASET.split("/")[-1],
         entity="smtb2023",
-        name=f"{model_name.split('_')[1]}_{layer_num:02d}_dropout",
+        name=f"{model_name.split('_')[1]}_{layer_num:02d}",
         config={
             "model_name": model_name,
             "layer_num": layer_num,
             "hidden_dim": HIDDEN_DIM,
-            "dropout":DROPOUT,
+            "dropout": DROPOUT,
+            "early_stopping_patience": EARLY_STOPPING_PATIENCE,
+            "lr": LR,
+            "reduce_lr_patience": REDUCE_LR_PATIENCE,
         },
     )
 
     # define the callbacks with EarlyStopping and two more for nicer tracking
     callbacks = [
-        EarlyStopping(monitor="val/loss", patience=20, mode="min"),
+        EarlyStopping(monitor="val/loss", patience=EARLY_STOPPING_PATIENCE, mode="min"),
         RichModelSummary(),
         RichProgressBar(),
     ]
@@ -61,7 +68,7 @@ def train(model_name: str, layer_num: int):
     # look into the directory below
     datasets = []
     for ds in ["train", "validation", "test"]:
-        p = Path(f"/shared/stability/{model_name}/{ds}")
+        p = Path(DATASET) / model_name / ds
         datasets.append(train_validation_test(p, layer_num))
 
     train_dataset = FluorescenceDataset(datasets[0][0], datasets[0][1])
@@ -79,17 +86,17 @@ def train(model_name: str, layer_num: int):
 
 
 model_names = {
-    # 48: "esm2_t48_15B_UR50D",
-    # 36: "esm2_t36_3B_UR50D",
+    48: "esm2_t48_15B_UR50D",
+    36: "esm2_t36_3B_UR50D",
     33: "esm2_t33_650M_UR50D",
     30: "esm2_t30_150M_UR50D",
     12: "esm2_t12_35M_UR50D",
     6: "esm2_t6_8M_UR50D",
 }
 
-# num_layers = int(sys.argv[1])
-# model_name = model_names[num_layers]
-# for layer in range(num_layers + 1):
+num_layers = int(sys.argv[1])
+model_name = model_names[num_layers]
+for layer in range(num_layers + 1):
     # wandb.init()
-train("esm2_t33_650M_UR50D", 33)
-wandb.finish()
+    train(model_name, layer)
+    wandb.finish()
