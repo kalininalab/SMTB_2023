@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from pathlib import Path
 
 from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import RichModelSummary, RichProgressBar, EarlyStopping
+from pytorch_lightning.callbacks import RichModelSummary, RichProgressBar, EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from src.model import Model
@@ -52,6 +52,7 @@ def train(model_name: str, layer_num: int):
         EarlyStopping(monitor="val/loss", patience=EARLY_STOPPING_PATIENCE, mode="min"),
         RichModelSummary(),
         RichProgressBar(),
+        ModelCheckpoint(monitor="val/loss", mode="min"),
     ]
 
     # define the Trainer and it's most important arguments
