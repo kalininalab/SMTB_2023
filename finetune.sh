@@ -7,7 +7,7 @@ datasets=("/shared/stability" "/shared/fluorescence")
 layers=(6 12 30 33)
 
 # Random seeds
-seeds=(12345 67890 11112 13141 51517)
+seeds=(13141 51517)
 
 # Loop through each dataset
 for dataset in "${datasets[@]}"; do
@@ -16,9 +16,11 @@ for dataset in "${datasets[@]}"; do
         # Loop through each seed
         for seed in "${seeds[@]}"; do
             # Execute the full_train.py script with the given parameters
-            python full_train.py $layer $dataset --seed $seed
+            python full_train.py $layer $dataset --seed $seed &
         done
     done
 done
+
+wait
 
 
