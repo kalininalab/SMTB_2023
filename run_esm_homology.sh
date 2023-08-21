@@ -13,9 +13,7 @@ get_layers() {
     seq 0 $(($1)) | tr '\n' ' '
 }
 
-for dataset in sequence_normal sequence_shuffled; do
-    for model in "${!models[@]}"; do
-        layers=$(get_layers $model)
-         esm-extract "${models[$model]}" "/shared/homology/$dataset.fasta" "/shared/homology/${models[$model]}/$dataset" --repr_layers $layers --include mean
-    done
+for model in "${!models[@]}"; do
+    layers=$(get_layers $model)
+     esm-extract "${models[$model]}" "/shared/homology/sequence_shuffled_by_every_aminoacids.fasta" "/shared/homology/${models[$model]}/sequence_shuffled_by_every_aminoacids" --repr_layers $layers --include mean
 done
