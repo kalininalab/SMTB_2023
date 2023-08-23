@@ -10,7 +10,6 @@ pip install fair-esm wandb umap-learn plotly
 
 Please install pytorch according to the official [instructions](https://pytorch.org/get-started/locally/)
 
-
 ## Training
 
 To generate esm embeddings please refer to the [ESM repo](https://github.com/facebookresearch/esm)
